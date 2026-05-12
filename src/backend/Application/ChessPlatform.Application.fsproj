@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Ports.fs" />
+    <Compile Include="PlayMoveUseCase.fs" />
+    <Compile Include="MatchmakingUseCase.fs" />
   </ItemGroup>
 
   <ItemGroup>
