@@ -44,3 +44,22 @@ type RedisBus(connectionString: string) =
                 let! _ = db.SortedSetAddAsync(key, member', score) |> Async.AwaitTask
                 return ()
             }
+
+        member this.SubscribeMovePlayed(handler: string -> Async<unit>) =
+            async {
+                let channel = RedisChannel.Pattern("game:*:events")
+                
+                let! queue = subscriber.SubscribeAsync(channel) |> Async.AwaitTask
+                
+                queue.OnMessage(fun msg ->
+                    let ch = msg.Channel.ToString()
+                    // Extract gameId from "game:{gameId}:events"
+                    let parts = ch.Split(':')
+                    if parts.Length = 3 && parts.[0] = "game" && parts.[2] = "events" then
+                        let gameId = parts.[1]
+                        Async.Start(handler gameId)
+                )
+
+                let disposable = { new System.IDisposable with member _.Dispose() = queue.Unsubscribe() }
+                return disposable
+            }

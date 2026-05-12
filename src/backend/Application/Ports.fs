@@ -32,3 +32,6 @@ type IMessageBus =
     
     /// Adds a player to the matchmaking queue.
     abstract member EnqueueMatchmaking: userId: string * elo: int -> Async<unit>
+
+    /// Subscribes to move played events. The handler receives the gameId.
+    abstract member SubscribeMovePlayed: handler: (string -> Async<unit>) -> Async<System.IDisposable>
