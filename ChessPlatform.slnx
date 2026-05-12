@@ -17,6 +17,9 @@
     <Project Path="src/backend/WebApi/ChessPlatform.WebApi.fsproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Application.Tests/">
+    <Project Path="tests/Application.Tests/ChessPlatform.Application.Tests.fsproj" />
+  </Folder>
   <Folder Name="/tests/Domain.Tests/">
     <Project Path="tests/Domain.Tests/ChessPlatform.Domain.Tests.fsproj" />
   </Folder>
