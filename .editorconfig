@@ -1,0 +1,31 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{fs,fsx,fsi}]
+indent_size = 4
+max_line_length = 120
+
+# Fantomas settings
+fsharp_multiline_bracket_style = stroustrup
+fsharp_space_before_uppercase_invocation = true
+fsharp_newline_before_multiline_computation_expression = true
+fsharp_align_function_signature_to_indentation = true
+fsharp_alternative_long_member_definitions = true
+fsharp_multi_line_lambda_closing_newline = true
+
+[*.{ts,tsx,js,jsx,json,css,html}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2

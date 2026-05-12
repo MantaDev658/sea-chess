@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# Node / Bun
+node_modules/
+dist/
+.vite/
+bun.lockb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Infra
+*.tfstate
+*.tfstate.backup
+
+# Misc
+*.log
+.env
+.env.local
