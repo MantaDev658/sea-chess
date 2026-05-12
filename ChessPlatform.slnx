@@ -1,0 +1,29 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/backend/" />
+  <Folder Name="/src/backend/Application/">
+    <Project Path="src/backend/Application/ChessPlatform.Application.fsproj" />
+  </Folder>
+  <Folder Name="/src/backend/BackgroundWorkers/">
+    <Project Path="src/backend/BackgroundWorkers/ChessPlatform.BackgroundWorkers.fsproj" />
+  </Folder>
+  <Folder Name="/src/backend/Domain/">
+    <Project Path="src/backend/Domain/ChessPlatform.Domain.fsproj" />
+  </Folder>
+  <Folder Name="/src/backend/Infrastructure/">
+    <Project Path="src/backend/Infrastructure/ChessPlatform.Infrastructure.fsproj" />
+  </Folder>
+  <Folder Name="/src/backend/WebApi/">
+    <Project Path="src/backend/WebApi/ChessPlatform.WebApi.fsproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Domain.Tests/">
+    <Project Path="tests/Domain.Tests/ChessPlatform.Domain.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/tests/Infra.Tests/">
+    <Project Path="tests/Infra.Tests/ChessPlatform.Infra.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/tests/WebApi.Tests/">
+    <Project Path="tests/WebApi.Tests/ChessPlatform.WebApi.Tests.fsproj" />
+  </Folder>
+</Solution>
