@@ -6,10 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="PostgresRepo.fs" />
+    <Compile Include="RedisBus.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Application\ChessPlatform.Application.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.FSharp" Version="8.0.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
   </ItemGroup>
 
 </Project>

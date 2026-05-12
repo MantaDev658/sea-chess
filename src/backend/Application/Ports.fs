@@ -20,7 +20,10 @@ type IGameRepository =
     abstract member LoadGame: gameId: string -> Async<GameRecord option>
     
     /// Saves a game state, enforcing Optimistic Concurrency Control (OCC) using expectedVersion.
-    abstract member SaveGame: gameId: string * state: GameState * expectedVersion: int -> Async<Result<unit, SaveGameError>>
+    abstract member SaveGame: record: GameRecord * expectedVersion: int -> Async<Result<unit, SaveGameError>>
+    
+    /// Creates a new game. Fails if the game already exists.
+    abstract member CreateGame: record: GameRecord -> Async<Result<unit, SaveGameError>>
 
 /// Port for publishing events to the message bus (Redis).
 type IMessageBus =

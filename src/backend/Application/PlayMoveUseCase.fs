@@ -43,7 +43,8 @@ module PlayMoveUseCase =
                         let playedMove = List.head newState.History
                         
                         // 5. Save the state with OCC
-                        let! saveResult = repo.SaveGame(gameId, newState, record.State.Version)
+                        let newRecord = { record with State = newState }
+                        let! saveResult = repo.SaveGame(newRecord, record.State.Version)
                         match saveResult with
                         | Error SaveGameError.ConcurrencyConflict -> 
                             return Error ConcurrencyConflict
