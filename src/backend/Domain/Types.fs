@@ -19,11 +19,7 @@ type PieceType =
     | Pawn
 
 /// A piece on the board: a color and a kind.
-type Piece =
-    {
-        Color: Color
-        Type: PieceType
-    }
+type Piece = { Color: Color; Type: PieceType }
 
 /// A square on the board, represented as (file, rank) where both are 0-7.
 /// File 0 = a, File 7 = h.  Rank 0 = 1, Rank 7 = 8.
@@ -49,13 +45,12 @@ type Move =
     | PromotionCapture of From: Position * To: Position * Captured: Piece * PromoteTo: PieceType
 
 /// Tracks which castling moves are still available.
-type CastlingRights =
-    {
-        WhiteKingSide: bool
-        WhiteQueenSide: bool
-        BlackKingSide: bool
-        BlackQueenSide: bool
-    }
+type CastlingRights = {
+    WhiteKingSide: bool
+    WhiteQueenSide: bool
+    BlackKingSide: bool
+    BlackQueenSide: bool
+}
 
 /// The current status of the game.
 type GameStatus =
@@ -66,18 +61,17 @@ type GameStatus =
     | Draw of Reason: string
 
 /// Complete, immutable snapshot of a chess game.
-type GameState =
-    {
-        Board: Board
-        ActiveColor: Color
-        CastlingRights: CastlingRights
-        EnPassantTarget: Position option
-        HalfMoveClock: int
-        FullMoveNumber: int
-        History: Move list
-        Status: GameStatus
-        Version: int
-    }
+type GameState = {
+    Board: Board
+    ActiveColor: Color
+    CastlingRights: CastlingRights
+    EnPassantTarget: Position option
+    HalfMoveClock: int
+    FullMoveNumber: int
+    History: Move list
+    Status: GameStatus
+    Version: int
+}
 
 /// Reasons a move can be rejected.
 type MoveError =
@@ -89,9 +83,8 @@ type MoveError =
 
 /// A raw move request from the outside world (UI / API).
 /// The domain logic resolves this into a fully-typed Move.
-type MoveRequest =
-    {
-        From: Position
-        To: Position
-        Promotion: PieceType option
-    }
+type MoveRequest = {
+    From: Position
+    To: Position
+    Promotion: PieceType option
+}

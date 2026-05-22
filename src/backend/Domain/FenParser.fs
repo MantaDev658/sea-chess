@@ -42,7 +42,7 @@ module FenParser =
     /// Parse the piece-placement field (rank descriptions separated by '/').
     /// FEN ranks go from rank 8 (index 7) down to rank 1 (index 0).
     let private parsePiecePlacement (placement: string) : Result<Board, string> =
-        let ranks = placement.Split('/')
+        let ranks = placement.Split ('/')
 
         if ranks.Length <> 8 then
             Error $"Expected 8 ranks in piece placement, got {ranks.Length}"
@@ -91,26 +91,24 @@ module FenParser =
     /// Parse the castling availability field.
     let private parseCastlingRights (s: string) : Result<CastlingRights, string> =
         if s = "-" then
-            Ok
-                {
-                    WhiteKingSide = false
-                    WhiteQueenSide = false
-                    BlackKingSide = false
-                    BlackQueenSide = false
-                }
+            Ok {
+                WhiteKingSide = false
+                WhiteQueenSide = false
+                BlackKingSide = false
+                BlackQueenSide = false
+            }
         else
-            let valid = s |> Seq.forall (fun c -> "KQkq".Contains(c))
+            let valid = s |> Seq.forall (fun c -> "KQkq".Contains (c))
 
             if not valid then
                 Error $"Invalid castling rights: '{s}'"
             else
-                Ok
-                    {
-                        WhiteKingSide = s.Contains('K')
-                        WhiteQueenSide = s.Contains('Q')
-                        BlackKingSide = s.Contains('k')
-                        BlackQueenSide = s.Contains('q')
-                    }
+                Ok {
+                    WhiteKingSide = s.Contains ('K')
+                    WhiteQueenSide = s.Contains ('Q')
+                    BlackKingSide = s.Contains ('k')
+                    BlackQueenSide = s.Contains ('q')
+                }
 
     /// Parse the en passant target square field.
     let private parseEnPassant (s: string) : Result<Position option, string> =
@@ -121,7 +119,7 @@ module FenParser =
             let rank = int s.[1] - int '1'
 
             if file >= 0 && file <= 7 && rank >= 0 && rank <= 7 then
-                Ok(Some(file, rank))
+                Ok (Some (file, rank))
             else
                 Error $"En passant target out of range: '{s}'"
         else
@@ -138,7 +136,7 @@ module FenParser =
     /// Parse a standard FEN string into a GameState.
     /// Returns Error for malformed input.
     let parse (fen: string) : Result<GameState, string> =
-        let fields = fen.Trim().Split(' ')
+        let fields = fen.Trim().Split (' ')
 
         if fields.Length <> 6 then
             Error $"FEN must have 6 space-separated fields, got {fields.Length}"
@@ -155,22 +153,25 @@ module FenParser =
                             parseInt "half-move clock" fields.[4]
                             |> Result.bind (fun halfMove ->
                                 parseInt "full-move number" fields.[5]
-                                |> Result.map (fun fullMove ->
-                                    {
-                                        Board = board
-                                        ActiveColor = activeColor
-                                        CastlingRights = castling
-                                        EnPassantTarget = epTarget
-                                        HalfMoveClock = halfMove
-                                        FullMoveNumber = fullMove
-                                        History = []
-                                        Status = InProgress
-                                        Version = 0
-                                    }))))))
+                                |> Result.map (fun fullMove -> {
+                                    Board = board
+                                    ActiveColor = activeColor
+                                    CastlingRights = castling
+                                    EnPassantTarget = epTarget
+                                    HalfMoveClock = halfMove
+                                    FullMoveNumber = fullMove
+                                    History = []
+                                    Status = InProgress
+                                    Version = 0
+                                })
+                            )
+                        )
+                    )
+                )
+            )
 
     /// Convert a Position to algebraic notation (e.g., (0,0) -> "a1").
-    let positionToAlgebraic ((file, rank): Position) : string =
-        $"{char (int 'a' + file)}{rank + 1}"
+    let positionToAlgebraic ((file, rank): Position) : string = $"{char (int 'a' + file)}{rank + 1}"
 
     /// Convert algebraic notation to a Position (e.g., "a1" -> (0,0)).
     let algebraicToPosition (s: string) : Position option =
@@ -179,7 +180,7 @@ module FenParser =
             let rank = int s.[1] - int '1'
 
             if file >= 0 && file <= 7 && rank >= 0 && rank <= 7 then
-                Some(file, rank)
+                Some (file, rank)
             else
                 None
         else
@@ -189,24 +190,26 @@ module FenParser =
     let toFen (state: GameState) : string =
         // 1. Piece placement
         let placement =
-            [ for rank in 7 .. -1 .. 0 do
-                  let mutable empty = 0
-                  let mutable rankStr = ""
+            [
+                for rank in 7..-1..0 do
+                    let mutable empty = 0
+                    let mutable rankStr = ""
 
-                  for file in 0..7 do
-                      match Map.tryFind (file, rank) state.Board with
-                      | Some piece ->
-                          if empty > 0 then
-                              rankStr <- rankStr + string empty
-                              empty <- 0
+                    for file in 0..7 do
+                        match Map.tryFind (file, rank) state.Board with
+                        | Some piece ->
+                            if empty > 0 then
+                                rankStr <- rankStr + string empty
+                                empty <- 0
 
-                          rankStr <- rankStr + string (pieceToChar piece)
-                      | None -> empty <- empty + 1
+                            rankStr <- rankStr + string (pieceToChar piece)
+                        | None -> empty <- empty + 1
 
-                  if empty > 0 then
-                      rankStr <- rankStr + string empty
+                    if empty > 0 then
+                        rankStr <- rankStr + string empty
 
-                  yield rankStr ]
+                    yield rankStr
+            ]
             |> String.concat "/"
 
         // 2. Active color
@@ -219,15 +222,9 @@ module FenParser =
         let castling =
             let s =
                 (if state.CastlingRights.WhiteKingSide then "K" else "")
-                + (if state.CastlingRights.WhiteQueenSide then
-                       "Q"
-                   else
-                       "")
+                + (if state.CastlingRights.WhiteQueenSide then "Q" else "")
                 + (if state.CastlingRights.BlackKingSide then "k" else "")
-                + (if state.CastlingRights.BlackQueenSide then
-                       "q"
-                   else
-                       "")
+                + (if state.CastlingRights.BlackQueenSide then "q" else "")
 
             if s = "" then "-" else s
 
@@ -241,5 +238,4 @@ module FenParser =
         $"{placement} {activeColor} {castling} {epTarget} {state.HalfMoveClock} {state.FullMoveNumber}"
 
     /// The standard starting position FEN.
-    let startingFen =
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    let startingFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

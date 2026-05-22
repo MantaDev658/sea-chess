@@ -62,40 +62,29 @@ module Game =
     // ───────── Move Generation (pseudo-legal, before check filtering) ─────────
 
     /// Generate sliding moves along direction vectors (for Rook, Bishop, Queen).
-    let private slidingMoves
-        (board: Board)
-        (color: Color)
-        (from: Position)
-        (directions: (int * int) list)
-        : Move list =
-        [
-            for (df, dr) in directions do
-                let mutable file, rank = from
-                let mutable blocked = false
+    let private slidingMoves (board: Board) (color: Color) (from: Position) (directions: (int * int) list) : Move list = [
+        for (df, dr) in directions do
+            let mutable file, rank = from
+            let mutable blocked = false
 
-                while not blocked do
-                    file <- file + df
-                    rank <- rank + dr
-                    let target = (file, rank)
+            while not blocked do
+                file <- file + df
+                rank <- rank + dr
+                let target = (file, rank)
 
-                    if not (isOnBoard target) then
+                if not (isOnBoard target) then
+                    blocked <- true
+                else
+                    match pieceAt board target with
+                    | None -> yield Normal (from, target)
+                    | Some piece when piece.Color <> color ->
+                        yield Capture (from, target, piece)
                         blocked <- true
-                    else
-                        match pieceAt board target with
-                        | None -> yield Normal(from, target)
-                        | Some piece when piece.Color <> color ->
-                            yield Capture(from, target, piece)
-                            blocked <- true
-                        | Some _ -> blocked <- true
-        ]
+                    | Some _ -> blocked <- true
+    ]
 
     /// Generate pawn moves (forward, double-push, captures, en passant, promotion).
-    let private pawnMoves
-        (board: Board)
-        (color: Color)
-        (from: Position)
-        (epTarget: Position option)
-        : Move list =
+    let private pawnMoves (board: Board) (color: Color) (from: Position) (epTarget: Position option) : Move list =
         let (file, rank) = from
         let dir = pawnDirection color
         let oneForward = (file, rank + dir)
@@ -110,13 +99,13 @@ module Game =
             if isOnBoard oneForward && isSquareEmpty board oneForward then
                 if snd oneForward = promoRank then
                     for pt in promotionTypes do
-                        yield Promotion(from, oneForward, pt)
+                        yield Promotion (from, oneForward, pt)
                 else
-                    yield Normal(from, oneForward)
+                    yield Normal (from, oneForward)
 
                     // Double push from starting rank
                     if rank = startRank && isSquareEmpty board twoForward then
-                        yield Normal(from, twoForward)
+                        yield Normal (from, twoForward)
 
             // Diagonal captures
             for df in [ -1; 1 ] do
@@ -127,16 +116,16 @@ module Game =
                     | Some piece when piece.Color <> color ->
                         if snd captureTarget = promoRank then
                             for pt in promotionTypes do
-                                yield PromotionCapture(from, captureTarget, piece, pt)
+                                yield PromotionCapture (from, captureTarget, piece, pt)
                         else
-                            yield Capture(from, captureTarget, piece)
+                            yield Capture (from, captureTarget, piece)
                     | _ -> ()
 
                     // En passant
                     match epTarget with
                     | Some ep when ep = captureTarget ->
                         let capturedPawnPos = (file + df, rank)
-                        yield EnPassant(from, captureTarget, capturedPawnPos)
+                        yield EnPassant (from, captureTarget, capturedPawnPos)
                     | _ -> ()
         ]
 
@@ -144,17 +133,7 @@ module Game =
     let private knightMoves (board: Board) (color: Color) (from: Position) : Move list =
         let (file, rank) = from
 
-        let offsets =
-            [
-                (-2, -1)
-                (-2, 1)
-                (-1, -2)
-                (-1, 2)
-                (1, -2)
-                (1, 2)
-                (2, -1)
-                (2, 1)
-            ]
+        let offsets = [ (-2, -1); (-2, 1); (-1, -2); (-1, 2); (1, -2); (1, 2); (2, -1); (2, 1) ]
 
         [
             for (df, dr) in offsets do
@@ -162,8 +141,8 @@ module Game =
 
                 if isOnBoard target then
                     match pieceAt board target with
-                    | None -> yield Normal(from, target)
-                    | Some piece when piece.Color <> color -> yield Capture(from, target, piece)
+                    | None -> yield Normal (from, target)
+                    | Some piece when piece.Color <> color -> yield Capture (from, target, piece)
                     | _ -> ()
         ]
 
@@ -171,17 +150,7 @@ module Game =
     let private kingBasicMoves (board: Board) (color: Color) (from: Position) : Move list =
         let (file, rank) = from
 
-        let offsets =
-            [
-                (-1, -1)
-                (-1, 0)
-                (-1, 1)
-                (0, -1)
-                (0, 1)
-                (1, -1)
-                (1, 0)
-                (1, 1)
-            ]
+        let offsets = [ (-1, -1); (-1, 0); (-1, 1); (0, -1); (0, 1); (1, -1); (1, 0); (1, 1) ]
 
         [
             for (df, dr) in offsets do
@@ -189,8 +158,8 @@ module Game =
 
                 if isOnBoard target then
                     match pieceAt board target with
-                    | None -> yield Normal(from, target)
-                    | Some piece when piece.Color <> color -> yield Capture(from, target, piece)
+                    | None -> yield Normal (from, target)
+                    | Some piece when piece.Color <> color -> yield Capture (from, target, piece)
                     | _ -> ()
         ]
 
@@ -208,104 +177,85 @@ module Game =
             [ (tf - 1, tr - pawnDir); (tf + 1, tr - pawnDir) ]
             |> List.exists (fun pos ->
                 isOnBoard pos
-                && (pieceAt board pos = Some { Color = attackerColor; Type = Pawn }))
+                && (pieceAt board pos = Some { Color = attackerColor; Type = Pawn })
+            )
 
         if pawnAttack then
             true
         else
 
-        // 2. Knight attacks
-        let knightOffsets =
-            [
-                (-2, -1)
-                (-2, 1)
-                (-1, -2)
-                (-1, 2)
-                (1, -2)
-                (1, 2)
-                (2, -1)
-                (2, 1)
-            ]
+            // 2. Knight attacks
+            let knightOffsets = [ (-2, -1); (-2, 1); (-1, -2); (-1, 2); (1, -2); (1, 2); (2, -1); (2, 1) ]
 
-        let knightAttack =
-            knightOffsets
-            |> List.exists (fun (df, dr) ->
-                let pos = (tf + df, tr + dr)
+            let knightAttack =
+                knightOffsets
+                |> List.exists (fun (df, dr) ->
+                    let pos = (tf + df, tr + dr)
 
-                isOnBoard pos
-                && (pieceAt board pos = Some { Color = attackerColor; Type = Knight }))
+                    isOnBoard pos
+                    && (pieceAt board pos = Some { Color = attackerColor; Type = Knight })
+                )
 
-        if knightAttack then
-            true
-        else
+            if knightAttack then
+                true
+            else
 
-        // 3. King attacks (adjacent squares)
-        let kingOffsets =
-            [
-                (-1, -1)
-                (-1, 0)
-                (-1, 1)
-                (0, -1)
-                (0, 1)
-                (1, -1)
-                (1, 0)
-                (1, 1)
-            ]
+                // 3. King attacks (adjacent squares)
+                let kingOffsets = [ (-1, -1); (-1, 0); (-1, 1); (0, -1); (0, 1); (1, -1); (1, 0); (1, 1) ]
 
-        let kingAttack =
-            kingOffsets
-            |> List.exists (fun (df, dr) ->
-                let pos = (tf + df, tr + dr)
+                let kingAttack =
+                    kingOffsets
+                    |> List.exists (fun (df, dr) ->
+                        let pos = (tf + df, tr + dr)
 
-                isOnBoard pos
-                && (pieceAt board pos = Some { Color = attackerColor; Type = King }))
+                        isOnBoard pos
+                        && (pieceAt board pos = Some { Color = attackerColor; Type = King })
+                    )
 
-        if kingAttack then
-            true
-        else
-
-        // 4. Sliding attacks: Rook/Queen along ranks and files
-        let rookDirs = [ (1, 0); (-1, 0); (0, 1); (0, -1) ]
-
-        let rookQueenAttack =
-            rookDirs
-            |> List.exists (fun (df, dr) ->
-                let rec scan f r =
-                    let nf, nr = f + df, r + dr
-
-                    if not (isOnBoard (nf, nr)) then
-                        false
-                    else
-                        match pieceAt board (nf, nr) with
-                        | None -> scan nf nr
-                        | Some p ->
-                            p.Color = attackerColor
-                            && (p.Type = Rook || p.Type = Queen)
-
-                scan tf tr)
-
-        if rookQueenAttack then
-            true
-        else
-
-        // 5. Sliding attacks: Bishop/Queen along diagonals
-        let bishopDirs = [ (1, 1); (1, -1); (-1, 1); (-1, -1) ]
-
-        bishopDirs
-        |> List.exists (fun (df, dr) ->
-            let rec scan f r =
-                let nf, nr = f + df, r + dr
-
-                if not (isOnBoard (nf, nr)) then
-                    false
+                if kingAttack then
+                    true
                 else
-                    match pieceAt board (nf, nr) with
-                    | None -> scan nf nr
-                    | Some p ->
-                        p.Color = attackerColor
-                        && (p.Type = Bishop || p.Type = Queen)
 
-            scan tf tr)
+                    // 4. Sliding attacks: Rook/Queen along ranks and files
+                    let rookDirs = [ (1, 0); (-1, 0); (0, 1); (0, -1) ]
+
+                    let rookQueenAttack =
+                        rookDirs
+                        |> List.exists (fun (df, dr) ->
+                            let rec scan f r =
+                                let nf, nr = f + df, r + dr
+
+                                if not (isOnBoard (nf, nr)) then
+                                    false
+                                else
+                                    match pieceAt board (nf, nr) with
+                                    | None -> scan nf nr
+                                    | Some p -> p.Color = attackerColor && (p.Type = Rook || p.Type = Queen)
+
+                            scan tf tr
+                        )
+
+                    if rookQueenAttack then
+                        true
+                    else
+
+                        // 5. Sliding attacks: Bishop/Queen along diagonals
+                        let bishopDirs = [ (1, 1); (1, -1); (-1, 1); (-1, -1) ]
+
+                        bishopDirs
+                        |> List.exists (fun (df, dr) ->
+                            let rec scan f r =
+                                let nf, nr = f + df, r + dr
+
+                                if not (isOnBoard (nf, nr)) then
+                                    false
+                                else
+                                    match pieceAt board (nf, nr) with
+                                    | None -> scan nf nr
+                                    | Some p -> p.Color = attackerColor && (p.Type = Bishop || p.Type = Queen)
+
+                            scan tf tr
+                        )
 
     /// Is the king of the given color currently in check?
     let isKingInCheck (board: Board) (color: Color) : bool =
@@ -345,7 +295,7 @@ module Game =
                         && not (isSquareAttackedBy board enemy f5)
                         && not (isSquareAttackedBy board enemy f6)
                     then
-                        yield Castle(color, KingSide)
+                        yield Castle (color, KingSide)
 
                 // Queen-side castling
                 if
@@ -365,7 +315,7 @@ module Game =
                         && not (isSquareAttackedBy board enemy f3)
                         && not (isSquareAttackedBy board enemy f2)
                     then
-                        yield Castle(color, QueenSide)
+                        yield Castle (color, QueenSide)
             ]
 
     // ───────── Pseudo-Legal Move Generation ─────────
@@ -385,17 +335,7 @@ module Game =
             let dirs = [ (1, 0); (-1, 0); (0, 1); (0, -1) ]
             slidingMoves board color pos dirs
         | Queen ->
-            let dirs =
-                [
-                    (1, 0)
-                    (-1, 0)
-                    (0, 1)
-                    (0, -1)
-                    (1, 1)
-                    (1, -1)
-                    (-1, 1)
-                    (-1, -1)
-                ]
+            let dirs = [ (1, 0); (-1, 0); (0, 1); (0, -1); (1, 1); (1, -1); (-1, 1); (-1, -1) ]
 
             slidingMoves board color pos dirs
         | King -> kingBasicMoves board color pos
@@ -405,31 +345,31 @@ module Game =
     /// Extract the source and destination from any move.
     let moveFromTo (move: Move) : Position * Position =
         match move with
-        | Normal(f, t) -> (f, t)
-        | Capture(f, t, _) -> (f, t)
-        | Castle(color, side) ->
+        | Normal (f, t) -> (f, t)
+        | Capture (f, t, _) -> (f, t)
+        | Castle (color, side) ->
             let rank = if color = White then 0 else 7
 
             match side with
             | KingSide -> ((4, rank), (6, rank))
             | QueenSide -> ((4, rank), (2, rank))
-        | EnPassant(f, t, _) -> (f, t)
-        | Promotion(f, t, _) -> (f, t)
-        | PromotionCapture(f, t, _, _) -> (f, t)
+        | EnPassant (f, t, _) -> (f, t)
+        | Promotion (f, t, _) -> (f, t)
+        | PromotionCapture (f, t, _, _) -> (f, t)
 
     /// Apply a move to the board, returning the new board.
     /// Assumes the move has already been validated.
     let applyMoveToBoard (board: Board) (move: Move) : Board =
         match move with
-        | Normal(from, to') ->
+        | Normal (from, to') ->
             let piece = Map.find from board
             board |> Map.remove from |> Map.add to' piece
 
-        | Capture(from, to', _) ->
+        | Capture (from, to', _) ->
             let piece = Map.find from board
             board |> Map.remove from |> Map.remove to' |> Map.add to' piece
 
-        | Castle(color, side) ->
+        | Castle (color, side) ->
             let rank = if color = White then 0 else 7
             let king = Map.find (4, rank) board
 
@@ -451,20 +391,17 @@ module Game =
                 |> Map.add (2, rank) king
                 |> Map.add (3, rank) rook
 
-        | EnPassant(from, to', capturedPawnPos) ->
+        | EnPassant (from, to', capturedPawnPos) ->
             let piece = Map.find from board
 
-            board
-            |> Map.remove from
-            |> Map.remove capturedPawnPos
-            |> Map.add to' piece
+            board |> Map.remove from |> Map.remove capturedPawnPos |> Map.add to' piece
 
-        | Promotion(from, to', promoteTo) ->
+        | Promotion (from, to', promoteTo) ->
             let piece = Map.find from board
             let promoted = { piece with Type = promoteTo }
             board |> Map.remove from |> Map.add to' promoted
 
-        | PromotionCapture(from, to', _, promoteTo) ->
+        | PromotionCapture (from, to', _, promoteTo) ->
             let piece = Map.find from board
             let promoted = { piece with Type = promoteTo }
 
@@ -477,7 +414,8 @@ module Game =
         moves
         |> List.filter (fun move ->
             let newBoard = applyMoveToBoard board move
-            not (isKingInCheck newBoard color))
+            not (isKingInCheck newBoard color)
+        )
 
     /// Generate all legal moves for the active player.
     let allLegalMoves (state: GameState) : Move list =
@@ -491,7 +429,8 @@ module Game =
                 if piece.Color = color then
                     pseudoLegalMovesForPiece state pos piece
                 else
-                    [])
+                    []
+            )
 
         let castles = castlingMoves state
         let allPseudo = pieceMoves @ castles
@@ -500,26 +439,22 @@ module Game =
     // ───────── Castling Rights Update ─────────
 
     /// Update castling rights based on the move that was just played.
-    let private updateCastlingRights
-        (rights: CastlingRights)
-        (move: Move)
-        (board: Board)
-        : CastlingRights =
+    let private updateCastlingRights (rights: CastlingRights) (move: Move) (board: Board) : CastlingRights =
         let (from, to') = moveFromTo move
 
         // Revoke rights if king moves
         let rights =
             match pieceAt board from with
-            | Some { Color = White; Type = King } ->
-                { rights with
+            | Some { Color = White; Type = King } -> {
+                rights with
                     WhiteKingSide = false
                     WhiteQueenSide = false
-                }
-            | Some { Color = Black; Type = King } ->
-                { rights with
+              }
+            | Some { Color = Black; Type = King } -> {
+                rights with
                     BlackKingSide = false
                     BlackQueenSide = false
-                }
+              }
             | _ -> rights
 
         // Revoke rights if rook moves from its starting square
@@ -551,7 +486,7 @@ module Game =
 
         if List.isEmpty legalMoves then
             if isKingInCheck state.Board opponent then
-                Checkmate(oppositeColor opponent) // The player who just moved wins
+                Checkmate (oppositeColor opponent) // The player who just moved wins
             else
                 Stalemate
         else if isKingInCheck state.Board opponent then
@@ -568,125 +503,133 @@ module Game =
     let resolveMove (state: GameState) (request: MoveRequest) : Result<Move, MoveError> =
         // Validate game is not over
         match state.Status with
-        | Checkmate _ | Stalemate | Draw _ -> Error GameAlreadyOver
+        | Checkmate _
+        | Stalemate
+        | Draw _ -> Error GameAlreadyOver
         | _ ->
 
-        // Validate there's a piece at the source
-        match pieceAt state.Board request.From with
-        | None -> Error NoPieceAtSource
-        | Some piece ->
+            // Validate there's a piece at the source
+            match pieceAt state.Board request.From with
+            | None -> Error NoPieceAtSource
+            | Some piece ->
 
-        // Validate the piece belongs to the active player
-        if piece.Color <> state.ActiveColor then
-            Error WrongColor
-        else
+                // Validate the piece belongs to the active player
+                if piece.Color <> state.ActiveColor then
+                    Error WrongColor
+                else
 
-        // Find matching legal move
-        let legalMoves = allLegalMoves state
+                    // Find matching legal move
+                    let legalMoves = allLegalMoves state
 
-        let matchingMove =
-            legalMoves
-            |> List.tryFind (fun move ->
-                let (from, to') = moveFromTo move
+                    let matchingMove =
+                        legalMoves
+                        |> List.tryFind (fun move ->
+                            let (from, to') = moveFromTo move
 
-                from = request.From
-                && to' = request.To
-                && (match request.Promotion, move with
-                    | Some pt, Promotion(_, _, mpt) -> pt = mpt
-                    | Some pt, PromotionCapture(_, _, _, mpt) -> pt = mpt
-                    | None, Promotion _ -> false // Must specify promotion type
-                    | None, PromotionCapture _ -> false
-                    | _ -> true))
+                            from = request.From
+                            && to' = request.To
+                            && (
+                                match request.Promotion, move with
+                                | Some pt, Promotion (_, _, mpt) -> pt = mpt
+                                | Some pt, PromotionCapture (_, _, _, mpt) -> pt = mpt
+                                | None, Promotion _ -> false // Must specify promotion type
+                                | None, PromotionCapture _ -> false
+                                | _ -> true
+                            )
+                        )
 
-        match matchingMove with
-        | None -> Error(InvalidMove "No legal move matches the request")
-        | Some move -> Ok move
+                    match matchingMove with
+                    | None -> Error (InvalidMove "No legal move matches the request")
+                    | Some move -> Ok move
 
     /// Apply a fully-typed, validated Move to a GameState.
     /// This is the core state transition function.
     let applyMove (state: GameState) (move: Move) : Result<GameState, MoveError> =
         // Validate game is not over
         match state.Status with
-        | Checkmate _ | Stalemate | Draw _ -> Error GameAlreadyOver
+        | Checkmate _
+        | Stalemate
+        | Draw _ -> Error GameAlreadyOver
         | _ ->
 
-        let (from, _to) = moveFromTo move
+            let (from, _to) = moveFromTo move
 
-        // Validate piece exists
-        match pieceAt state.Board from with
-        | None -> Error NoPieceAtSource
-        | Some piece ->
-
-        // Validate color
-        if piece.Color <> state.ActiveColor then
-            Error WrongColor
-        else
-
-        // Apply the move to the board
-        let newBoard = applyMoveToBoard state.Board move
-
-        // Verify we haven't left our own king in check
-        if isKingInCheck newBoard state.ActiveColor then
-            Error MoveLeavesKingInCheck
-        else
-
-        // Update castling rights
-        let newCastling = updateCastlingRights state.CastlingRights move state.Board
-
-        // Update en passant target
-        let newEpTarget =
-            match move with
-            | Normal(fromPos, toPos) ->
-                let piece = Map.find fromPos state.Board
-
-                if
-                    piece.Type = Pawn
-                    && abs (snd toPos - snd fromPos) = 2
-                then
-                    // En passant target is the square the pawn skipped
-                    Some(fst fromPos, (snd fromPos + snd toPos) / 2)
-                else
-                    None
-            | _ -> None
-
-        // Update half-move clock
-        let isCapture =
-            match move with
-            | Capture _ | EnPassant _ | PromotionCapture _ -> true
-            | _ -> false
-
-        let isPawnMove =
+            // Validate piece exists
             match pieceAt state.Board from with
-            | Some p -> p.Type = Pawn
-            | None -> false
+            | None -> Error NoPieceAtSource
+            | Some piece ->
 
-        let newHalfMoveClock =
-            if isPawnMove || isCapture then 0 else state.HalfMoveClock + 1
+                // Validate color
+                if piece.Color <> state.ActiveColor then
+                    Error WrongColor
+                else
 
-        // Update full-move number (increments after Black's move)
-        let newFullMoveNumber =
-            if state.ActiveColor = Black then
-                state.FullMoveNumber + 1
-            else
-                state.FullMoveNumber
+                    // Apply the move to the board
+                    let newBoard = applyMoveToBoard state.Board move
 
-        // Build the new state (before status detection)
-        let newState =
-            {
-                Board = newBoard
-                ActiveColor = oppositeColor state.ActiveColor
-                CastlingRights = newCastling
-                EnPassantTarget = newEpTarget
-                HalfMoveClock = newHalfMoveClock
-                FullMoveNumber = newFullMoveNumber
-                History = move :: state.History
-                Status = InProgress // Placeholder; updated below
-                Version = state.Version + 1
-            }
+                    // Verify we haven't left our own king in check
+                    if isKingInCheck newBoard state.ActiveColor then
+                        Error MoveLeavesKingInCheck
+                    else
 
-        // Detect game status for the new position
-        let status = detectGameStatus newState
-        Ok { newState with Status = status }
+                        // Update castling rights
+                        let newCastling = updateCastlingRights state.CastlingRights move state.Board
+
+                        // Update en passant target
+                        let newEpTarget =
+                            match move with
+                            | Normal (fromPos, toPos) ->
+                                let piece = Map.find fromPos state.Board
+
+                                if piece.Type = Pawn && abs (snd toPos - snd fromPos) = 2 then
+                                    // En passant target is the square the pawn skipped
+                                    Some (fst fromPos, (snd fromPos + snd toPos) / 2)
+                                else
+                                    None
+                            | _ -> None
+
+                        // Update half-move clock
+                        let isCapture =
+                            match move with
+                            | Capture _
+                            | EnPassant _
+                            | PromotionCapture _ -> true
+                            | _ -> false
+
+                        let isPawnMove =
+                            match pieceAt state.Board from with
+                            | Some p -> p.Type = Pawn
+                            | None -> false
+
+                        let newHalfMoveClock =
+                            if isPawnMove || isCapture then
+                                0
+                            else
+                                state.HalfMoveClock + 1
+
+                        // Update full-move number (increments after Black's move)
+                        let newFullMoveNumber =
+                            if state.ActiveColor = Black then
+                                state.FullMoveNumber + 1
+                            else
+                                state.FullMoveNumber
+
+                        // Build the new state (before status detection)
+                        let newState = {
+                            Board = newBoard
+                            ActiveColor = oppositeColor state.ActiveColor
+                            CastlingRights = newCastling
+                            EnPassantTarget = newEpTarget
+                            HalfMoveClock = newHalfMoveClock
+                            FullMoveNumber = newFullMoveNumber
+                            History = move :: state.History
+                            Status = InProgress // Placeholder; updated below
+                            Version = state.Version + 1
+                        }
+
+                        // Detect game status for the new position
+                        let status = detectGameStatus newState
+                        Ok { newState with Status = status }
 
     /// Convenience: resolve a MoveRequest and apply it in one step.
     let playMove (state: GameState) (request: MoveRequest) : Result<GameState, MoveError> =

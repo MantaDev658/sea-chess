@@ -6,10 +6,18 @@ open ChessPlatform.Domain
 // ───────── Helpers ─────────
 
 let play (state: GameState) (fromFile, fromRank) (toFile, toRank) =
-    Game.playMove state { From = (fromFile, fromRank); To = (toFile, toRank); Promotion = None }
+    Game.playMove state {
+        From = (fromFile, fromRank)
+        To = (toFile, toRank)
+        Promotion = None
+    }
 
 let playPromo (state: GameState) (fromFile, fromRank) (toFile, toRank) promo =
-    Game.playMove state { From = (fromFile, fromRank); To = (toFile, toRank); Promotion = Some promo }
+    Game.playMove state {
+        From = (fromFile, fromRank)
+        To = (toFile, toRank)
+        Promotion = Some promo
+    }
 
 let unwrap result =
     match result with
@@ -57,7 +65,7 @@ let fenTests =
             let fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
             let state = FenParser.parse fen |> unwrap
             Expect.equal "" state.ActiveColor Black
-            Expect.equal "" state.EnPassantTarget (Some(4, 2))
+            Expect.equal "" state.EnPassantTarget (Some (4, 2))
             Expect.equal "" (Map.find (4, 3) state.Board) { Color = White; Type = Pawn }
         }
 
@@ -67,13 +75,15 @@ let fenTests =
         }
 
         test "reject invalid FEN - bad active color" {
-            let result = FenParser.parse "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1"
+            let result =
+                FenParser.parse "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1"
+
             Expect.isTrue "" (Result.isError result)
         }
 
         test "algebraic round-trip" {
             let pos = FenParser.algebraicToPosition "e4"
-            Expect.equal "" pos (Some(4, 3))
+            Expect.equal "" pos (Some (4, 3))
             Expect.equal "" (FenParser.positionToAlgebraic (4, 3)) "e4"
         }
     ]
@@ -93,28 +103,42 @@ let pawnTests =
             let state = Game.newGame ()
             let result = play state (4, 1) (4, 3) |> unwrap
             Expect.equal "" (Map.find (4, 3) result.Board) { Color = White; Type = Pawn }
-            Expect.equal "" result.EnPassantTarget (Some(4, 2))
+            Expect.equal "" result.EnPassantTarget (Some (4, 2))
         }
 
         test "capture" {
             // Set up: after 1.e4 d5
             let state =
-                Game.newGame ()
-                |> play <| (4, 1) <| (4, 3) |> unwrap  // e4
-                |> play <| (3, 6) <| (3, 4) |> unwrap  // d5
-            let result = play state (4, 3) (3, 4) |> unwrap  // exd5
+                Game.newGame () |> play <| (4, 1) <| (4, 3)
+                |> unwrap // e4
+                |> play
+                <| (3, 6)
+                <| (3, 4)
+                |> unwrap // d5
+
+            let result = play state (4, 3) (3, 4) |> unwrap // exd5
             Expect.equal "" (Map.find (3, 4) result.Board) { Color = White; Type = Pawn }
         }
 
         test "en passant" {
             // 1.e4 a6 2.e5 d5 3.exd6 (en passant)
             let state =
-                Game.newGame ()
-                |> play <| (4, 1) <| (4, 3) |> unwrap  // e4
-                |> play <| (0, 6) <| (0, 5) |> unwrap  // a6
-                |> play <| (4, 3) <| (4, 4) |> unwrap  // e5
-                |> play <| (3, 6) <| (3, 4) |> unwrap  // d5
-            let result = play state (4, 4) (3, 5) |> unwrap  // exd6 e.p.
+                Game.newGame () |> play <| (4, 1) <| (4, 3)
+                |> unwrap // e4
+                |> play
+                <| (0, 6)
+                <| (0, 5)
+                |> unwrap // a6
+                |> play
+                <| (4, 3)
+                <| (4, 4)
+                |> unwrap // e5
+                |> play
+                <| (3, 6)
+                <| (3, 4)
+                |> unwrap // d5
+
+            let result = play state (4, 4) (3, 5) |> unwrap // exd6 e.p.
             Expect.equal "" (Map.find (3, 5) result.Board) { Color = White; Type = Pawn }
             // The captured pawn at d5 should be gone
             Expect.isTrue "" (Game.isSquareEmpty result.Board (3, 4))
@@ -142,14 +166,14 @@ let knightTests =
     testList "Knight" [
         test "L-shape move" {
             let state = Game.newGame ()
-            let result = play state (1, 0) (2, 2) |> unwrap  // Nc3
+            let result = play state (1, 0) (2, 2) |> unwrap // Nc3
             Expect.equal "" (Map.find (2, 2) result.Board) { Color = White; Type = Knight }
         }
 
         test "knight capture" {
             let fen = "8/8/3p4/8/4N3/8/8/4K2k w - - 0 1"
             let state = FenParser.parse fen |> unwrap
-            let result = play state (4, 3) (3, 5) |> unwrap  // Nxd6
+            let result = play state (4, 3) (3, 5) |> unwrap // Nxd6
             Expect.equal "" (Map.find (3, 5) result.Board) { Color = White; Type = Knight }
         }
     ]
@@ -216,7 +240,7 @@ let kingTests =
         test "kingside castling" {
             let fen = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1"
             let state = FenParser.parse fen |> unwrap
-            let result = play state (4, 0) (6, 0) |> unwrap  // O-O
+            let result = play state (4, 0) (6, 0) |> unwrap // O-O
             Expect.equal "" (Map.find (6, 0) result.Board) { Color = White; Type = King }
             Expect.equal "" (Map.find (5, 0) result.Board) { Color = White; Type = Rook }
         }
@@ -224,7 +248,7 @@ let kingTests =
         test "queenside castling" {
             let fen = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1"
             let state = FenParser.parse fen |> unwrap
-            let result = play state (4, 0) (2, 0) |> unwrap  // O-O-O
+            let result = play state (4, 0) (2, 0) |> unwrap // O-O-O
             Expect.equal "" (Map.find (2, 0) result.Board) { Color = White; Type = King }
             Expect.equal "" (Map.find (3, 0) result.Board) { Color = White; Type = Rook }
         }
@@ -232,9 +256,15 @@ let kingTests =
         test "castling revoked after king move" {
             let fen = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1"
             let state = FenParser.parse fen |> unwrap
+
             let result =
-                play state (4, 0) (5, 0) |> unwrap  // Kf1
-                |> play <| (0, 6) <| (0, 5) |> unwrap  // a6
+                play state (4, 0) (5, 0)
+                |> unwrap // Kf1
+                |> play
+                <| (0, 6)
+                <| (0, 5)
+                |> unwrap // a6
+
             Expect.isFalse "" result.CastlingRights.WhiteKingSide
             Expect.isFalse "" result.CastlingRights.WhiteQueenSide
         }
@@ -269,14 +299,33 @@ let statusTests =
         test "Scholar's Mate" {
             // 1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6 4.Qxf7#
             let state =
-                Game.newGame ()
-                |> play <| (4, 1) <| (4, 3) |> unwrap  // e4
-                |> play <| (4, 6) <| (4, 4) |> unwrap  // e5
-                |> play <| (5, 0) <| (2, 3) |> unwrap  // Bc4
-                |> play <| (1, 7) <| (2, 5) |> unwrap  // Nc6
-                |> play <| (3, 0) <| (7, 4) |> unwrap  // Qh5
-                |> play <| (6, 7) <| (5, 5) |> unwrap  // Nf6
-                |> play <| (7, 4) <| (5, 6) |> unwrap  // Qxf7#
+                Game.newGame () |> play <| (4, 1) <| (4, 3)
+                |> unwrap // e4
+                |> play
+                <| (4, 6)
+                <| (4, 4)
+                |> unwrap // e5
+                |> play
+                <| (5, 0)
+                <| (2, 3)
+                |> unwrap // Bc4
+                |> play
+                <| (1, 7)
+                <| (2, 5)
+                |> unwrap // Nc6
+                |> play
+                <| (3, 0)
+                <| (7, 4)
+                |> unwrap // Qh5
+                |> play
+                <| (6, 7)
+                <| (5, 5)
+                |> unwrap // Nf6
+                |> play
+                <| (7, 4)
+                <| (5, 6)
+                |> unwrap // Qxf7#
+
             Expect.equal "" state.Status (Checkmate White)
         }
 
@@ -285,6 +334,7 @@ let statusTests =
             let state = FenParser.parse fen |> unwrap
             // Rh8+ gives check
             let result = play state (7, 0) (7, 7) |> unwrap
+
             match result.Status with
             | Check Black -> ()
             | other -> failwith $"Expected Check Black but got {other}"
@@ -329,11 +379,13 @@ let errorTests =
 
         test "game already over" {
             let fen = "4k3/8/8/8/8/8/8/4K2R w - - 0 1"
-            let mateState =
-                FenParser.parse "k7/2Q5/1K6/8/8/8/8/8 b - - 0 1"
-                |> unwrap
-                // Manually set checkmate status for testing
-            let mateState = { mateState with Status = Checkmate White }
+            let mateState = FenParser.parse "k7/2Q5/1K6/8/8/8/8/8 b - - 0 1" |> unwrap
+            // Manually set checkmate status for testing
+            let mateState = {
+                mateState with
+                    Status = Checkmate White
+            }
+
             let result = play mateState (0, 7) (1, 7)
             Expect.equal "" (expectError result) GameAlreadyOver
         }
@@ -362,33 +414,65 @@ let propertyTests =
             Expect.isTrue "" (Map.count state.Board <= 32)
             // After some moves
             let state2 =
-                state
-                |> play <| (4, 1) <| (4, 3) |> unwrap
-                |> play <| (4, 6) <| (4, 4) |> unwrap
+                state |> play <| (4, 1) <| (4, 3) |> unwrap |> play <| (4, 6) <| (4, 4)
+                |> unwrap
+
             Expect.isTrue "" (Map.count state2.Board <= 32)
         }
 
         test "exactly one king per color always" {
             let state = Game.newGame ()
+
             let whiteKings =
-                state.Board |> Map.filter (fun _ p -> p.Color = White && p.Type = King) |> Map.count
+                state.Board
+                |> Map.filter (fun _ p -> p.Color = White && p.Type = King)
+                |> Map.count
+
             let blackKings =
-                state.Board |> Map.filter (fun _ p -> p.Color = Black && p.Type = King) |> Map.count
+                state.Board
+                |> Map.filter (fun _ p -> p.Color = Black && p.Type = King)
+                |> Map.count
+
             Expect.equal "" whiteKings 1
             Expect.equal "" blackKings 1
 
             // After Scholar's mate
             let mated =
-                Game.newGame ()
-                |> play <| (4, 1) <| (4, 3) |> unwrap
-                |> play <| (4, 6) <| (4, 4) |> unwrap
-                |> play <| (5, 0) <| (2, 3) |> unwrap
-                |> play <| (1, 7) <| (2, 5) |> unwrap
-                |> play <| (3, 0) <| (7, 4) |> unwrap
-                |> play <| (6, 7) <| (5, 5) |> unwrap
-                |> play <| (7, 4) <| (5, 6) |> unwrap
-            let wk = mated.Board |> Map.filter (fun _ p -> p.Color = White && p.Type = King) |> Map.count
-            let bk = mated.Board |> Map.filter (fun _ p -> p.Color = Black && p.Type = King) |> Map.count
+                Game.newGame () |> play <| (4, 1) <| (4, 3) |> unwrap |> play
+                <| (4, 6)
+                <| (4, 4)
+                |> unwrap
+                |> play
+                <| (5, 0)
+                <| (2, 3)
+                |> unwrap
+                |> play
+                <| (1, 7)
+                <| (2, 5)
+                |> unwrap
+                |> play
+                <| (3, 0)
+                <| (7, 4)
+                |> unwrap
+                |> play
+                <| (6, 7)
+                <| (5, 5)
+                |> unwrap
+                |> play
+                <| (7, 4)
+                <| (5, 6)
+                |> unwrap
+
+            let wk =
+                mated.Board
+                |> Map.filter (fun _ p -> p.Color = White && p.Type = King)
+                |> Map.count
+
+            let bk =
+                mated.Board
+                |> Map.filter (fun _ p -> p.Color = Black && p.Type = King)
+                |> Map.count
+
             Expect.equal "" wk 1
             Expect.equal "" bk 1
         }

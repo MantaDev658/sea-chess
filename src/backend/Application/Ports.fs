@@ -18,10 +18,10 @@ type SaveGameError =
 type IGameRepository =
     /// Loads a game by ID.
     abstract member LoadGame: gameId: string -> Async<GameRecord option>
-    
+
     /// Saves a game state, enforcing Optimistic Concurrency Control (OCC) using expectedVersion.
     abstract member SaveGame: record: GameRecord * expectedVersion: int -> Async<Result<unit, SaveGameError>>
-    
+
     /// Creates a new game. Fails if the game already exists.
     abstract member CreateGame: record: GameRecord -> Async<Result<unit, SaveGameError>>
 
@@ -29,7 +29,7 @@ type IGameRepository =
 type IMessageBus =
     /// Publishes an event indicating a move was played.
     abstract member PublishMovePlayed: gameId: string * move: Move -> Async<unit>
-    
+
     /// Adds a player to the matchmaking queue.
     abstract member EnqueueMatchmaking: userId: string * elo: int -> Async<unit>
 

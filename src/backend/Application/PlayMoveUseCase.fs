@@ -13,25 +13,27 @@ module PlayMoveUseCase =
         | PersistenceError of string
 
     /// Orchestrates the process of playing a move.
-    let execute 
-        (repo: IGameRepository) 
-        (bus: IMessageBus) 
-        (gameId: string) 
-        (userId: string) 
-        (request: MoveRequest) 
-        : Async<Result<GameState, PlayMoveError>> = 
+    let execute
+        (repo: IGameRepository)
+        (bus: IMessageBus)
+        (gameId: string)
+        (userId: string)
+        (request: MoveRequest)
+        : Async<Result<GameState, PlayMoveError>>
+        =
         async {
             // 1. Load the game
             let! gameOpt = repo.LoadGame gameId
+
             match gameOpt with
             | None -> return Error GameNotFound
             | Some record ->
                 // 2. Validate it's the correct user's turn
-                let expectedUserId = 
+                let expectedUserId =
                     match record.State.ActiveColor with
                     | White -> record.WhitePlayerId
                     | Black -> record.BlackPlayerId
-                
+
                 if userId <> expectedUserId then
                     return Error NotYourTurn
                 else
@@ -41,17 +43,16 @@ module PlayMoveUseCase =
                     | Ok newState ->
                         // 4. Extract the actual Move that was played (from the history)
                         let playedMove = List.head newState.History
-                        
+
                         // 5. Save the state with OCC
                         let newRecord = { record with State = newState }
-                        let! saveResult = repo.SaveGame(newRecord, record.State.Version)
+                        let! saveResult = repo.SaveGame (newRecord, record.State.Version)
+
                         match saveResult with
-                        | Error SaveGameError.ConcurrencyConflict -> 
-                            return Error ConcurrencyConflict
-                        | Error (SaveGameError.PersistenceFailure msg) -> 
-                            return Error (PersistenceError msg)
+                        | Error SaveGameError.ConcurrencyConflict -> return Error ConcurrencyConflict
+                        | Error (SaveGameError.PersistenceFailure msg) -> return Error (PersistenceError msg)
                         | Ok () ->
                             // 6. Publish the event
-                            do! bus.PublishMovePlayed(gameId, playedMove)
+                            do! bus.PublishMovePlayed (gameId, playedMove)
                             return Ok newState
         }

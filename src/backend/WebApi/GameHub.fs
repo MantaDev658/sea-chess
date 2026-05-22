@@ -7,4 +7,4 @@ type GameHub() =
     inherit Hub()
 
     member this.JoinGame(gameId: string) =
-        this.Groups.AddToGroupAsync(this.Context.ConnectionId, gameId)
+        this.Groups.AddToGroupAsync (this.Context.ConnectionId, gameId)

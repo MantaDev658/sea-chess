@@ -32,13 +32,12 @@ type PostgresRepo(connectionString: string) =
                     |> Sql.connect
                     |> Sql.query "SELECT StateFen, WhitePlayerId, BlackPlayerId, Version FROM Games WHERE GameId = @id"
                     |> Sql.parameters [ "id", Sql.string gameId ]
-                    |> Sql.execute (fun read ->
-                        {|
-                            StateFen = read.string "StateFen"
-                            WhitePlayerId = read.string "WhitePlayerId"
-                            BlackPlayerId = read.string "BlackPlayerId"
-                            Version = read.int "Version"
-                        |})
+                    |> Sql.execute (fun read -> {|
+                        StateFen = read.string "StateFen"
+                        WhitePlayerId = read.string "WhitePlayerId"
+                        BlackPlayerId = read.string "BlackPlayerId"
+                        Version = read.int "Version"
+                    |})
 
                 match result with
                 | [] -> return None
@@ -48,13 +47,12 @@ type PostgresRepo(connectionString: string) =
                         let stateWithVersion = { state with Version = row.Version }
 
                         return
-                            Some
-                                {
-                                    GameId = gameId
-                                    State = stateWithVersion
-                                    WhitePlayerId = row.WhitePlayerId
-                                    BlackPlayerId = row.BlackPlayerId
-                                }
+                            Some {
+                                GameId = gameId
+                                State = stateWithVersion
+                                WhitePlayerId = row.WhitePlayerId
+                                BlackPlayerId = row.BlackPlayerId
+                            }
                     | Error _ -> return None // Or throw
                 | _ -> return None
             }
@@ -78,11 +76,11 @@ type PostgresRepo(connectionString: string) =
                         |> Sql.executeNonQuery
 
                     if affected = 1 then
-                        return Ok()
+                        return Ok ()
                     else
                         return Error SaveGameError.ConcurrencyConflict
                 with ex ->
-                    return Error(SaveGameError.PersistenceFailure ex.Message)
+                    return Error (SaveGameError.PersistenceFailure ex.Message)
             }
 
         member this.CreateGame(record: GameRecord) =
@@ -105,11 +103,11 @@ type PostgresRepo(connectionString: string) =
                         |> Sql.executeNonQuery
 
                     if affected = 1 then
-                        return Ok()
+                        return Ok ()
                     else
                         return Error SaveGameError.ConcurrencyConflict
                 with
                 | :? PostgresException as ex when ex.SqlState = "23505" -> // unique_violation
                     return Error SaveGameError.ConcurrencyConflict
-                | ex -> return Error(SaveGameError.PersistenceFailure ex.Message)
+                | ex -> return Error (SaveGameError.PersistenceFailure ex.Message)
             }

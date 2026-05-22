@@ -9,9 +9,7 @@ open Microsoft.AspNetCore.Http
 
 module Handlers =
 
-    type MatchmakingRequest = {
-        Elo: int
-    }
+    type MatchmakingRequest = { Elo: int }
 
     type MoveRequestDto = {
         FromRow: int
@@ -25,12 +23,12 @@ module Handlers =
         Request.mapJson (fun (req: MatchmakingRequest) ->
             fun ctx ->
                 task {
-                    let userId = 
-                        match ctx.Request.Headers.TryGetValue("X-User-Id") with
-                        | true, v -> v.ToString()
+                    let userId =
+                        match ctx.Request.Headers.TryGetValue ("X-User-Id") with
+                        | true, v -> v.ToString ()
                         | _ -> "anonymous"
-                        
-                    do! bus.EnqueueMatchmaking(userId, req.Elo)
+
+                    do! bus.EnqueueMatchmaking (userId, req.Elo)
                     return! Response.withStatusCode 202 >> Response.ofJson {| Message = "Queued" |} <| ctx
                 }
         )
@@ -41,15 +39,16 @@ module Handlers =
                 task {
                     let route = Request.getRoute ctx
                     let gameId = route.GetString "id"
-                    let userId = 
-                        match ctx.Request.Headers.TryGetValue("X-User-Id") with
-                        | true, v -> v.ToString()
+
+                    let userId =
+                        match ctx.Request.Headers.TryGetValue ("X-User-Id") with
+                        | true, v -> v.ToString ()
                         | _ -> "anonymous"
 
-                    let req : MoveRequest = {
+                    let req: MoveRequest = {
                         From = (reqDto.FromCol, reqDto.FromRow)
                         To = (reqDto.ToCol, reqDto.ToRow)
-                        Promotion = 
+                        Promotion =
                             match reqDto.Promotion with
                             | "Q" -> Some Queen
                             | "R" -> Some Rook
@@ -59,20 +58,31 @@ module Handlers =
                     }
 
                     let! result = PlayMoveUseCase.execute repo bus gameId userId req
-                    
+
                     match result with
                     | Ok state ->
-                        return! Response.withStatusCode 200 >> Response.ofJson {| Fen = FenParser.toFen state |} <| ctx
+                        return!
+                            Response.withStatusCode 200 >> Response.ofJson {| Fen = FenParser.toFen state |}
+                            <| ctx
                     | Error err ->
                         match err with
                         | PlayMoveUseCase.GameNotFound ->
-                            return! Response.withStatusCode 404 >> Response.ofJson {| Error = "Game not found" |} <| ctx
+                            return!
+                                Response.withStatusCode 404 >> Response.ofJson {| Error = "Game not found" |}
+                                <| ctx
                         | PlayMoveUseCase.NotYourTurn ->
-                            return! Response.withStatusCode 400 >> Response.ofJson {| Error = "Not your turn" |} <| ctx
+                            return!
+                                Response.withStatusCode 400 >> Response.ofJson {| Error = "Not your turn" |}
+                                <| ctx
                         | PlayMoveUseCase.DomainError e ->
-                            return! Response.withStatusCode 400 >> Response.ofJson {| Error = sprintf "%A" e |} <| ctx
+                            return!
+                                Response.withStatusCode 400 >> Response.ofJson {| Error = sprintf "%A" e |}
+                                <| ctx
                         | PlayMoveUseCase.ConcurrencyConflict ->
-                            return! Response.withStatusCode 409 >> Response.ofJson {| Error = "Concurrency conflict" |} <| ctx
+                            return!
+                                Response.withStatusCode 409
+                                >> Response.ofJson {| Error = "Concurrency conflict" |}
+                                <| ctx
                         | PlayMoveUseCase.PersistenceError msg ->
                             return! Response.withStatusCode 500 >> Response.ofJson {| Error = msg |} <| ctx
                 }
