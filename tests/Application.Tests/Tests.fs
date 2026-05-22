@@ -19,6 +19,9 @@ type MockBus () =
             publishedMoves <- move :: publishedMoves
         }
         member _.EnqueueMatchmaking (_, _) = async { () }
+        member _.SubscribeMovePlayed _ = async {
+            return { new System.IDisposable with member _.Dispose() = () }
+        }
 
 let tests =
     testList "PlayMoveUseCase Tests" [

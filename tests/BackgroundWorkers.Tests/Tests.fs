@@ -1,8 +1,14 @@
-﻿module Tests
+module Tests
 
-open System
-open Xunit
+open Expecto
 
-[<Fact>]
-let ``My test`` () =
-    Assert.True(true)
+let tests =
+    testList "Background Worker Tests" [
+        test "Dummy pass test" {
+            Expect.isTrue true "Dummy check"
+        }
+    ]
+
+[<EntryPoint>]
+let main args =
+    runTestsWithCLIArgs [] args tests

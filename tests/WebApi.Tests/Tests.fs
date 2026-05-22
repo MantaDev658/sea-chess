@@ -23,6 +23,9 @@ type MockBus () =
     interface IMessageBus with
         member _.PublishMovePlayed (_, _) = async { () }
         member _.EnqueueMatchmaking (_, _) = async { () }
+        member _.SubscribeMovePlayed _ = async {
+            return { new System.IDisposable with member _.Dispose() = () }
+        }
 
 type AppFactory(repo: IGameRepository) =
     inherit WebApplicationFactory<Program.Marker>()

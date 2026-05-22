@@ -27,3 +27,10 @@ Thumbs.db
 *.log
 .env
 .env.local
+
+# Sandbox / Local CLI Caches
+.dotnet/
+.dotnet-home/
+.local/
+Library/
+src/backend/BackgroundWorkers/.local/

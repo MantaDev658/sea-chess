@@ -17,7 +17,7 @@ type ComputerPlayerWorker(
 
     let computerUserId = "computer"
 
-    let handleMovePlayed gameId = async {
+    let handleMovePlayed (gameId: string) = async {
         try
             logger.LogInformation("Received move event for game {GameId}", gameId)
             

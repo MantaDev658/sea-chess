@@ -18,8 +18,8 @@ let expectError = function
     | Error e -> e
 
 // Global fixture
-let mutable pgContainer : PostgreSqlContainer = null
-let mutable redisContainer : RedisContainer = null
+let mutable pgContainer : PostgreSqlContainer = Unchecked.defaultof<PostgreSqlContainer>
+let mutable redisContainer : RedisContainer = Unchecked.defaultof<RedisContainer>
 
 let setup () =
     task {
