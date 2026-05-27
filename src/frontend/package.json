@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "npm run lint && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "bun test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
@@ -26,6 +27,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "bun-types": "^1.3.14",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",

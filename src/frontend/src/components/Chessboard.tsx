@@ -53,7 +53,7 @@ const playSound = (type: 'move' | 'capture' | 'check' | 'invalid') => {
   }
 }
 
-// Custom modern vector SVG renderers for cryptographic theme chess pieces
+// Custom modern vector SVG renderers for high-performance geometric chess pieces
 const ChessPieceSVG: React.FC<{ type: string; color: 'w' | 'b'; className?: string }> = ({
   type,
   color,

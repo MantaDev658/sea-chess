@@ -19,8 +19,8 @@ interface MoveRecord {
   num: number
   white: string
   black?: string
-  whiteHash: string
-  blackHash?: string
+  whiteTelemetry: string
+  blackTelemetry?: string
 }
 
 function App() {
@@ -55,13 +55,11 @@ function App() {
     ledgerEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [moves])
 
-  const generateTxHash = () => {
-    const chars = '0123456789abcdef'
-    let hash = '0x'
-    for (let i = 0; i < 8; i++) {
-      hash += chars[Math.floor(Math.random() * 16)]
-    }
-    return hash
+  const generateTelemetry = () => {
+    const ev = (Math.random() * 2 - 1).toFixed(2)
+    const sign = parseFloat(ev) >= 0 ? '+' : ''
+    const time = Math.floor(Math.random() * 8) + 2
+    return `eval: ${sign}${ev} | t: ${time}ms`
   }
 
   // Handle board move updates
@@ -81,8 +79,8 @@ function App() {
         num: Math.floor(i / 2) + 1,
         white: history[i],
         black: history[i + 1] || undefined,
-        whiteHash: generateTxHash(),
-        blackHash: history[i + 1] ? generateTxHash() : undefined,
+        whiteTelemetry: generateTelemetry(),
+        blackTelemetry: history[i + 1] ? generateTelemetry() : undefined,
       })
     }
     setMoves(records)
@@ -125,8 +123,8 @@ function App() {
             num: Math.floor(i / 2) + 1,
             white: history[i],
             black: history[i + 1] || undefined,
-            whiteHash: generateTxHash(),
-            blackHash: history[i + 1] ? generateTxHash() : undefined,
+            whiteTelemetry: generateTelemetry(),
+            blackTelemetry: history[i + 1] ? generateTelemetry() : undefined,
           })
         }
         setMoves(records)
@@ -134,7 +132,7 @@ function App() {
         setCommandError(null)
       }
     } catch {
-      setCommandError(`INVALID TX COMMAND: "${sanitizedCmd}" is not a valid algebraic move. Try "e4", "Nf3", "O-O".`)
+      setCommandError(`INVALID ENGINE COMMAND: "${sanitizedCmd}" is not a valid algebraic move. Try "e4", "Nf3", "O-O".`)
       // Clear error alert after 4 seconds
       setTimeout(() => setCommandError(null), 4000)
     }
@@ -166,7 +164,7 @@ function App() {
                 ECLAIR<span className="bg-gradient-to-r from-btc-orange to-gold bg-clip-text text-transparent ml-1">CORE</span>
               </span>
               <span className="font-mono text-[9px] tracking-widest text-stardust/60 uppercase">
-                Chess Platform Terminal
+                Chess Platform
               </span>
             </div>
           </div>
@@ -178,7 +176,7 @@ function App() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
               </span>
-              <span className="text-stardust uppercase">SECURE CONNECT: OK</span>
+              <span className="text-stardust uppercase">ENGINE LINK: OK</span>
             </div>
 
             {/* Audio Toggle */}
@@ -196,19 +194,16 @@ function App() {
       {/* Main Terminal Body */}
       <main className="relative max-w-7xl w-full mx-auto px-4 py-8 flex-grow z-10 flex flex-col gap-6">
         
-        {/* Banner with dramatic Bitcoin DeFi typography */}
+        {/* Banner with dramatic technical chess typography */}
         <div className="text-center md:text-left flex flex-col md:flex-row md:items-end justify-between border-b border-pure-light/5 pb-4">
           <div>
             <h1 className="font-heading font-bold text-3xl md:text-5xl tracking-tight leading-tight m-0 text-pure-light">
-              Secure Crypto <span className="bg-gradient-to-r from-btc-orange to-gold bg-clip-text text-transparent">Chess Core</span>
+              <span className="bg-gradient-to-r from-btc-orange to-gold bg-clip-text text-transparent">Eclair Chess</span>
             </h1>
-            <p className="font-body text-sm md:text-base text-stardust mt-1">
-              Zero-latency client predicted move validation. Enter keyboard algebraic commands or select pieces.
-            </p>
           </div>
           <div className="flex gap-2 mt-4 md:mt-0 justify-center">
             <Button variant="outline" size="sm" onClick={handleRestart} className="gap-2">
-              <RefreshCw size={13} /> Reset Node
+              <RefreshCw size={13} /> Reset Engine
             </Button>
           </div>
         </div>
@@ -243,7 +238,7 @@ function App() {
                   className="flex-grow"
                 />
                 <Button type="submit" variant="primary">
-                  EXECUTE TX
+                  EXECUTE MOVE
                 </Button>
               </form>
               
@@ -271,7 +266,6 @@ function App() {
                     <Activity size={14} />
                   </div>
                 </div>
-                <div className="text-[9px] font-mono text-stardust/60 mt-2">Zero-latency Client Prediction Active</div>
               </Card>
 
               <Card variant="glass" className="p-4" hoverEffect>
@@ -284,19 +278,18 @@ function App() {
                     <Cpu size={14} />
                   </div>
                 </div>
-                <div className="text-[9px] font-mono text-stardust/60 mt-2">chess.js local thread active</div>
               </Card>
             </div>
 
-            {/* Live Transactions Move Ledger */}
+            {/* Live Move Telemetry Ledger */}
             <Card variant="glass" className="flex-grow flex flex-col h-[350px] lg:h-[400px] p-0 overflow-hidden border-pure-light/10 bg-matter/40 backdrop-blur-md" hoverEffect={false}>
               <CardHeader className="p-4 border-b border-pure-light/5 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Layers size={14} className="text-btc-orange" />
-                  <CardTitle className="text-sm font-mono tracking-wider uppercase font-semibold">MOVE TRANSACTION LEDGER</CardTitle>
+                  <CardTitle className="text-sm font-mono tracking-wider uppercase font-semibold">MOVE LEDGER</CardTitle>
                 </div>
                 <span className="font-mono text-[9px] text-stardust/50 px-2 py-0.5 border border-pure-light/5 bg-black/30 rounded-full">
-                  BLOCK DEPTH: {moves.length}
+                  PLIES PLAYED: {moves.length * 2}
                 </span>
               </CardHeader>
               
@@ -305,7 +298,7 @@ function App() {
                 {moves.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-stardust/40 space-y-2">
                     <Grid size={24} className="animate-pulse" />
-                    <span className="text-[10px] uppercase tracking-wider">No moves recorded in ledger block</span>
+                    <span className="text-[10px] uppercase tracking-wider">No moves recorded in telemetry ledger</span>
                   </div>
                 ) : (
                   moves.map((m) => (
@@ -315,33 +308,33 @@ function App() {
                     >
                       {/* Move sequence tag */}
                       <div className="flex justify-between items-center text-[10px] text-stardust/50 border-b border-pure-light/5 pb-1">
-                        <span>BLOCK #{m.num.toString().padStart(3, '0')}</span>
-                        <span className="text-gold font-semibold uppercase">PROVEN VALID</span>
+                        <span>MOVE SEQUENCE #{m.num.toString().padStart(3, '0')}</span>
+                        <span className="text-gold font-semibold uppercase">VALIDATED BY ENGINE</span>
                       </div>
 
-                      {/* Side by side player move transactions */}
+                      {/* Side by side player moves */}
                       <div className="grid grid-cols-2 gap-4">
                         {/* White transaction */}
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] text-stardust/40 uppercase">GOLD MOVE TX</span>
+                          <span className="text-[9px] text-stardust/40 uppercase">WHITE MOVE TELEMETRY</span>
                           <div className="flex items-center justify-between">
                             <span className="text-gold font-bold text-sm">{m.white}</span>
-                            <span className="text-[8px] text-stardust/60 font-mono">{m.whiteHash}</span>
+                            <span className="text-[8px] text-stardust/60 font-mono">{m.whiteTelemetry}</span>
                           </div>
                         </div>
 
                         {/* Black transaction */}
                         {m.black ? (
                           <div className="flex flex-col gap-0.5 border-l border-pure-light/5 pl-4">
-                            <span className="text-[9px] text-stardust/40 uppercase">ORANGE MOVE TX</span>
+                            <span className="text-[9px] text-stardust/40 uppercase">BLACK MOVE TELEMETRY</span>
                             <div className="flex items-center justify-between">
                               <span className="text-btc-orange font-bold text-sm">{m.black}</span>
-                              <span className="text-[8px] text-stardust/60 font-mono">{m.blackHash}</span>
+                              <span className="text-[8px] text-stardust/60 font-mono">{m.blackTelemetry}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center pl-4 text-[9px] text-stardust/30 animate-pulse uppercase tracking-wider">
-                            Pending Tx...
+                            Pending Move...
                           </div>
                         )}
                       </div>
